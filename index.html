@@ -240,31 +240,63 @@
     margin-top: 4px;
   }
 
-  /* COUNTER */
+  /* COUNTER DASHBOARD */
   .counter-wrap {
     position: relative;
     margin-top: 48px;
     animation: fadeUp 0.8s 0.6s ease both;
+    width: 100%;
+    max-width: 680px;
+  }
+
+  .counter-card {
+    background: rgba(31,28,24,0.85);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 28px;
+    padding: 28px 32px;
+    backdrop-filter: blur(12px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .counter-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 70% 60% at 0% 50%, rgba(212,98,58,0.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  /* Top row: ring + meta */
+  .counter-top {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+  }
+
+  .counter-ring-wrap {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
   }
 
   .counter-btn {
     background: none;
     border: none;
     cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0;
-    position: relative;
     padding: 0;
     transition: transform 0.15s;
+    position: relative;
   }
 
+  .counter-btn:hover { transform: scale(1.03); }
   .counter-btn:active { transform: scale(0.96); }
 
   .counter-ring {
-    width: 160px;
-    height: 160px;
+    width: 130px;
+    height: 130px;
     position: relative;
   }
 
@@ -277,13 +309,13 @@
   .counter-ring-bg {
     fill: none;
     stroke: rgba(255,255,255,0.06);
-    stroke-width: 3;
+    stroke-width: 4;
   }
 
   .counter-ring-fill {
     fill: none;
     stroke: var(--terra);
-    stroke-width: 3;
+    stroke-width: 4;
     stroke-linecap: round;
     transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.4s;
   }
@@ -295,76 +327,359 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 0;
+  }
+
+  .counter-label-top {
+    font-family: 'Syne', sans-serif;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    line-height: 1;
+    margin-bottom: 6px;
   }
 
   .counter-number {
     font-family: 'Playfair Display', serif;
-    font-size: 52px;
+    font-size: 22px;
     font-weight: 900;
     color: var(--cream);
     line-height: 1;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-bottom: 10px;
   }
 
   .counter-number.pop {
-    transform: scale(1.15);
+    transform: scale(1.12);
     color: var(--terra-light);
   }
 
-  .counter-label-top {
+  .counter-label-bottom {
+    font-family: 'Syne', sans-serif;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    line-height: 1;
+    margin-top: 0;
+  }
+
+  .counter-tap-hint {
+    font-family: 'Syne', sans-serif;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    transition: color 0.2s;
+  }
+
+  .counter-btn:hover .counter-tap-hint { color: var(--terra); }
+  .counter-btn.done .counter-ring-fill { stroke: var(--gold); }
+  .counter-btn.done .counter-number { color: var(--gold); }
+
+  /* Meta: dates + status */
+  .counter-meta {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .counter-status {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--cream);
+    line-height: 1.2;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+  }
+
+  .counter-dates {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .counter-date-box {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 14px;
+  }
+
+  .cdb-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+
+  .cdb-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--cream-dim);
+    letter-spacing: 0.02em;
+  }
+
+  .cdb-value.not-started {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 400;
+    font-family: 'DM Sans', sans-serif;
+    font-style: italic;
+  }
+
+  /* Progress bar */
+  .counter-progress-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  .counter-progress-bar {
+    flex: 1;
+    height: 4px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .counter-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--terra), var(--gold));
+    border-radius: 100px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 0%;
+  }
+
+  .counter-pct {
+    font-family: 'Syne', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--terra);
+    white-space: nowrap;
+  }
+
+  /* Divider */
+  .counter-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 20px 0 16px;
+  }
+
+  /* Bottom row: daily checklist + water */
+  .counter-bottom {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .daily-section-label {
     font-family: 'Syne', sans-serif;
     font-size: 9px;
     font-weight: 700;
     letter-spacing: 0.2em;
     text-transform: uppercase;
     color: var(--text-muted);
+    margin-bottom: 10px;
   }
 
-  .counter-label-bottom {
-    font-family: 'Syne', sans-serif;
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--text-muted);
+  /* Daily checklist */
+  .daily-checks {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
   }
 
-  .counter-hint {
-    font-family: 'Syne', sans-serif;
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-top: 14px;
+  .daily-check-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 8px;
+    transition: background 0.2s;
+  }
+
+  .daily-check-item:hover { background: rgba(255,255,255,0.03); }
+
+  .dci-box {
+    width: 18px; height: 18px;
+    border: 1.5px solid var(--text-muted);
+    border-radius: 5px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .daily-check-item.checked .dci-box {
+    background: var(--terra);
+    border-color: var(--terra);
+  }
+
+  .daily-check-item.checked .dci-box::after {
+    content: '';
+    width: 9px; height: 6px;
+    border-left: 2px solid white;
+    border-bottom: 2px solid white;
+    transform: rotate(-45deg) translateY(-1px);
+    display: block;
+  }
+
+  .dci-label {
+    font-size: 12px;
+    color: var(--text-dim);
     transition: color 0.2s;
   }
 
-  .counter-btn:hover .counter-hint { color: var(--terra); }
+  .daily-check-item.checked .dci-label {
+    color: var(--text-muted);
+    text-decoration: line-through;
+  }
 
-  .counter-btn.done .counter-ring-fill { stroke: var(--gold); }
-  .counter-btn.done .counter-number { color: var(--gold); }
-  .counter-btn.done .counter-hint { color: var(--gold); letter-spacing: 0.2em; }
+  /* Water tracker */
+  .water-tracker {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .water-glasses {
+    display: flex;
+    gap: 5px;
+    flex-wrap: nowrap;
+    justify-content: center;
+  }
+
+  .water-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    transition: color 0.3s;
+    margin-top: 10px;
+    text-align: center;
+  }
+
+  .water-glass:hover { transform: scale(1.1); }
+
+  .water-glass svg {
+    width: 100%; height: 100%;
+  }
+
+  .water-glass-body {
+    fill: rgba(255,255,255,0.06);
+    transition: fill 0.3s;
+  }
+
+  .water-glass.filled .water-glass-body {
+    fill: rgba(74,124,140,0.6);
+  }
+
+  .water-glass-outline {
+    fill: none;
+    stroke: rgba(255,255,255,0.15);
+    stroke-width: 1.5;
+  }
+
+  .water-glass.filled .water-glass-outline {
+    stroke: var(--blue-soft);
+  }
+
+  .water-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    transition: color 0.3s;
+  }
+
+  .water-label.full { color: var(--blue-soft); }
+
+  /* Person panels */
+  .person-panel {
+    background: rgba(255,255,255,0.025);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px;
+  }
+
+  .person-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .person-panel-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .fran-name { color: var(--terra-light); }
+  .maria-name { color: var(--olive-light); }
+
+  .person-panel-tag {
+    font-size: 18px;
+  }
+
+  /* Override dci-box color per panel */
+  .maria-panel .daily-check-item.checked .dci-box {
+    background: var(--olive);
+    border-color: var(--olive);
+  }
+
+  .maria-panel .water-glass.filled .water-glass-body {
+    fill: rgba(122,140,78,0.5);
+  }
+
+  .maria-panel .water-glass.filled .water-glass-outline {
+    stroke: var(--olive-light);
+  }
+
+  .maria-panel .water-label.full { color: var(--olive-light); }
+
+  /* Reset — subtle icon in top-right of card */
+  .counter-reset-row {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+  }
 
   .counter-reset {
-    font-family: 'Syne', sans-serif;
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--text-muted);
     background: none;
     border: none;
     cursor: pointer;
-    margin-top: 10px;
-    padding: 4px 8px;
-    border-radius: 6px;
-    transition: color 0.2s, background 0.2s;
+    color: var(--text-muted);
+    font-size: 16px;
+    line-height: 1;
+    padding: 4px;
+    border-radius: 50%;
+    transition: color 0.2s, transform 0.3s;
     display: none;
+    opacity: 0.5;
   }
 
   .counter-reset.visible { display: block; }
-  .counter-reset:hover { color: var(--terra); background: rgba(212,98,58,0.1); }
+  .counter-reset:hover { color: var(--terra); transform: rotate(-180deg); opacity: 1; }
+
+  /* Water glasses — small so all 8 fit in one row */
+  .water-glass {
+    width: 20px;
+    height: 24px;
+    cursor: pointer;
+    transition: transform 0.15s;
+    flex-shrink: 0;
+  }
 
   .scroll-cue {
     position: absolute;
@@ -1244,23 +1559,116 @@
   </div>
 
   <div class="counter-wrap">
-    <button class="counter-btn" id="counterBtn" onclick="tickCounter()">
-      <div class="counter-ring">
-        <svg viewBox="0 0 160 160">
-          <circle class="counter-ring-bg" cx="80" cy="80" r="70"/>
-          <circle class="counter-ring-fill" id="counterArc" cx="80" cy="80" r="70"
-            stroke-dasharray="439.82"
-            stroke-dashoffset="0"/>
-        </svg>
-        <div class="counter-inner">
-          <span class="counter-label-top">Days</span>
-          <span class="counter-number" id="counterNum">75</span>
-          <span class="counter-label-bottom">Left</span>
+    <div class="counter-card" style="position:relative;">
+
+      <div class="counter-reset-row">
+        <button class="counter-reset" id="counterReset" onclick="resetCounter()" title="Reset challenge">↺</button>
+      </div>
+
+      <!-- Top row -->
+      <div class="counter-top">
+        <!-- Ring -->
+        <div class="counter-ring-wrap">
+          <button class="counter-btn" id="counterBtn" onclick="tickCounter()">
+            <div class="counter-ring">
+              <svg viewBox="0 0 130 130">
+                <circle class="counter-ring-bg" cx="65" cy="65" r="56"/>
+                <circle class="counter-ring-fill" id="counterArc" cx="65" cy="65" r="56"
+                  stroke-dasharray="351.86"
+                  stroke-dashoffset="0"/>
+              </svg>
+              <div class="counter-inner">
+                <span class="counter-label-top">Days</span>
+                <span class="counter-number" id="counterNum">75</span>
+                <span class="counter-label-bottom">Left</span>
+              </div>
+            </div>
+            <span class="counter-tap-hint" id="counterHint">Tap to log a day</span>
+          </button>
+        </div>
+
+        <!-- Meta -->
+        <div class="counter-meta">
+          <div class="counter-status" id="counterStatus">Ready to start your challenge?</div>
+          <div class="counter-dates">
+            <div class="counter-date-box">
+              <div class="cdb-label">Start date</div>
+              <div class="cdb-value not-started" id="startDateEl">Not started</div>
+            </div>
+            <div class="counter-date-box">
+              <div class="cdb-label">End date</div>
+              <div class="cdb-value not-started" id="endDateEl">—</div>
+            </div>
+          </div>
+          <div class="counter-progress-row">
+            <div class="counter-progress-bar">
+              <div class="counter-progress-fill" id="progressFill"></div>
+            </div>
+            <span class="counter-pct" id="progressPct">0%</span>
+          </div>
         </div>
       </div>
-      <span class="counter-hint" id="counterHint">Tap to mark a day done</span>
-    </button>
-    <button class="counter-reset" id="counterReset" onclick="resetCounter()">↺ Reset</button>
+
+      <div class="counter-divider"></div>
+
+      <!-- Bottom row: two personal panels -->
+      <div class="counter-bottom">
+
+        <!-- Francisco -->
+        <div class="person-panel fran-panel">
+          <div class="person-panel-header">
+            <span class="person-panel-name fran-name">Francisco</span>
+            <span class="person-panel-tag">💪</span>
+          </div>
+          <div class="daily-section-label" style="margin-top:12px;">Today's checklist</div>
+          <div class="daily-checks" id="checks-fran">
+            <div class="daily-check-item" onclick="toggleCheck(this,'fran')" data-key="workout">
+              <div class="dci-box"></div><span class="dci-label">💪 Workout done</span>
+            </div>
+            <div class="daily-check-item" onclick="toggleCheck(this,'fran')" data-key="diet">
+              <div class="dci-box"></div><span class="dci-label">🥗 On-plan meals</span>
+            </div>
+            <div class="daily-check-item" onclick="toggleCheck(this,'fran')" data-key="fast">
+              <div class="dci-box"></div><span class="dci-label">⏱ Fast kept (16h)</span>
+            </div>
+            <div class="daily-check-item" onclick="toggleCheck(this,'fran')" data-key="water">
+              <div class="dci-box"></div><span class="dci-label">💧 Water hit (2.5L+)</span>
+            </div>
+          </div>
+          <div class="daily-section-label" style="margin-top:16px;">Water</div>
+          <div class="water-glasses" id="waterGlasses-fran"></div>
+          <div class="water-label" id="waterLabel-fran">0 / 8 glasses (~0L)</div>
+        </div>
+
+        <!-- Maria -->
+        <div class="person-panel maria-panel">
+          <div class="person-panel-header">
+            <span class="person-panel-name maria-name">Maria</span>
+            <span class="person-panel-tag">🌿</span>
+          </div>
+          <div class="daily-section-label" style="margin-top:12px;">Today's checklist</div>
+          <div class="daily-checks" id="checks-maria">
+            <div class="daily-check-item" onclick="toggleCheck(this,'maria')" data-key="workout">
+              <div class="dci-box"></div><span class="dci-label">💪 Workout done</span>
+            </div>
+            <div class="daily-check-item" onclick="toggleCheck(this,'maria')" data-key="diet">
+              <div class="dci-box"></div><span class="dci-label">🥗 On-plan meals</span>
+            </div>
+            <div class="daily-check-item" onclick="toggleCheck(this,'maria')" data-key="fast">
+              <div class="dci-box"></div><span class="dci-label">⏱ Fast kept (16h)</span>
+            </div>
+            <div class="daily-check-item" onclick="toggleCheck(this,'maria')" data-key="water">
+              <div class="dci-box"></div><span class="dci-label">💧 Water hit (2.5L+)</span>
+            </div>
+          </div>
+          <div class="daily-section-label" style="margin-top:16px;">Water</div>
+          <div class="water-glasses" id="waterGlasses-maria"></div>
+          <div class="water-label" id="waterLabel-maria">0 / 8 glasses (~0L)</div>
+        </div>
+
+      </div>
+
+    </div>
   </div>
 
   <div class="scroll-cue">
@@ -1995,47 +2403,6 @@
     </div>
   </div>
 
-  <!-- TIPS -->
-  <div class="section-header reveal" style="margin-top:80px;">
-    <div>
-      <div class="section-label">Pro Tips</div>
-      <h2 class="section-title">Make It <em>Stick</em></h2>
-    </div>
-  </div>
-
-  <div class="tips-grid reveal">
-    <div class="tip-card">
-      <span class="tip-icon">⚡</span>
-      <div class="tip-title">Speed Shortcuts</div>
-      <div class="tip-text">Buy garbanzos and lentejas pre-cooked in jars. Pre-washed rúcula/espinacas bags. Boil 6–8 eggs at the start of the week. Tomate frito Hacendado instead of making tomato sauce from scratch.</div>
-    </div>
-    <div class="tip-card">
-      <span class="tip-icon">🧂</span>
-      <div class="tip-title">The One Spice</div>
-      <div class="tip-text">Pimentón de la Vera transforms every boring roasted protein. It's the difference between "food" and "Spanish food." Use it on everything.</div>
-    </div>
-    <div class="tip-card">
-      <span class="tip-icon">📊</span>
-      <div class="tip-title">Track for 2 Weeks</div>
-      <div class="tip-text">Use MyFitnessPal — it has Mercadona/Hacendado products. Scan barcodes for 2 weeks to calibrate your eye. After that, trust your portions and ditch the app.</div>
-    </div>
-    <div class="tip-card">
-      <span class="tip-icon">💧</span>
-      <div class="tip-title">Water Timing</div>
-      <div class="tip-text">A big glass at 12pm, 2pm, 5pm, and 8pm gets you to 2.5–3L easily without thinking about it. The window before the fast opens is perfect.</div>
-    </div>
-    <div class="tip-card">
-      <span class="tip-icon">📉</span>
-      <div class="tip-title">If Fat Loss Stalls</div>
-      <div class="tip-text">After 3 weeks with no change: first cut snack carbs slightly. Second: reduce rice/pasta at dinner by 20–30%. Never drop protein. Never drop below 1,400 (her) or 2,100 (him).</div>
-    </div>
-    <div class="tip-card">
-      <span class="tip-icon">🎯</span>
-      <div class="tip-title">The Target</div>
-      <div class="tip-text">Aim for 0.5–1kg/week loss. Faster than that and you're losing muscle. Slower than that after 3 weeks of consistency, tighten the snacks. Slow and sustainable beats aggressive and miserable.</div>
-    </div>
-  </div>
-
   <!-- SHOPPING LIST -->
   <div class="shop-section reveal">
     <div class="section-header">
@@ -2123,48 +2490,85 @@
 </footer>
 
 <script>
-  // COUNTER
+  // ── COUNTER ──────────────────────────────────────────────
   const TOTAL = 75;
-  const circumference = 2 * Math.PI * 70; // 439.82
+  const CIRC = 2 * Math.PI * 56; // r=56 → 351.86
 
-  function getCount() {
-    return parseInt(localStorage.getItem('75hard_days') || TOTAL);
-  }
+  const ls = {
+    get: k => localStorage.getItem(k),
+    set: (k,v) => localStorage.setItem(k, v),
+    del: k => localStorage.removeItem(k)
+  };
 
-  function saveCount(n) {
-    localStorage.setItem('75hard_days', n);
+  function getCount()     { return parseInt(ls.get('75hard_days') ?? TOTAL); }
+  function saveCount(n)   { ls.set('75hard_days', n); }
+  function getStart()     { return ls.get('75hard_start'); }
+  function saveStart(d)   { ls.set('75hard_start', d); }
+
+  function fmtDate(s) {
+    return new Date(s).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
   }
+  function addDays(s, n) {
+    const d = new Date(s); d.setDate(d.getDate() + n);
+    return d.toISOString().split('T')[0];
+  }
+  function today() { return new Date().toISOString().split('T')[0]; }
 
   function renderCounter(n, animate) {
-    const btn = document.getElementById('counterBtn');
-    const numEl = document.getElementById('counterNum');
-    const arc = document.getElementById('counterArc');
-    const hint = document.getElementById('counterHint');
-    const reset = document.getElementById('counterReset');
+    const completed = TOTAL - n;
+    const progress  = completed / TOTAL;
 
-    const progress = n / TOTAL;
-    const offset = circumference * (1 - progress);
-    arc.style.strokeDashoffset = offset;
-
-    numEl.textContent = n;
+    document.getElementById('counterArc').style.strokeDashoffset = CIRC * (1 - progress);
+    document.getElementById('counterNum').textContent = n;
+    document.getElementById('progressFill').style.width = Math.round(progress * 100) + '%';
+    document.getElementById('progressPct').textContent  = Math.round(progress * 100) + '%';
 
     if (animate) {
-      numEl.classList.add('pop');
-      setTimeout(() => numEl.classList.remove('pop'), 250);
+      const el = document.getElementById('counterNum');
+      el.classList.add('pop');
+      setTimeout(() => el.classList.remove('pop'), 250);
     }
 
-    if (n === 0) {
+    const btn    = document.getElementById('counterBtn');
+    const hint   = document.getElementById('counterHint');
+    const status = document.getElementById('counterStatus');
+    const reset  = document.getElementById('counterReset');
+
+    if (n === TOTAL) {
+      btn.classList.remove('done');
+      hint.textContent   = 'Tap to log day 1';
+      status.textContent = 'Ready to start your challenge?';
+    } else if (n === 0) {
       btn.classList.add('done');
-      hint.textContent = '🏆 Challenge Complete!';
-    } else if (n === 1) {
+      hint.textContent   = 'Challenge complete!';
+      status.textContent = '🏆 75 Hard Complete. Legends.';
+    } else if (n <= 5) {
       btn.classList.remove('done');
-      hint.textContent = 'Last day — finish strong';
-    } else if (n < 10) {
+      hint.textContent   = 'So close — tap to log';
+      status.textContent = `${n} day${n===1?'':'s'} left. Don't stop now.`;
+    } else if (n <= 25) {
       btn.classList.remove('done');
-      hint.textContent = `${n} days to go — almost there`;
+      hint.textContent   = 'Tap to log a day';
+      status.textContent = `${completed} days down. Almost there.`;
     } else {
       btn.classList.remove('done');
-      hint.textContent = 'Tap to mark a day done';
+      hint.textContent   = 'Tap to log a day';
+      status.textContent = `${completed} day${completed===1?'':'s'} done. Keep going.`;
+    }
+
+    const start = getStart();
+    const startEl = document.getElementById('startDateEl');
+    const endEl   = document.getElementById('endDateEl');
+    if (start) {
+      startEl.textContent = fmtDate(start);
+      startEl.classList.remove('not-started');
+      endEl.textContent   = fmtDate(addDays(start, 75));
+      endEl.classList.remove('not-started');
+    } else {
+      startEl.textContent = 'Not started';
+      startEl.classList.add('not-started');
+      endEl.textContent   = '—';
+      endEl.classList.add('not-started');
     }
 
     reset.classList.toggle('visible', n < TOTAL);
@@ -2173,18 +2577,105 @@
   function tickCounter() {
     let n = getCount();
     if (n <= 0) return;
+    if (n === TOTAL && !getStart()) saveStart(today());
     n--;
     saveCount(n);
+    // Reset both checklists and water for the new day
+    clearDayData('fran');
+    clearDayData('maria');
     renderCounter(n, true);
+    renderChecks('fran');
+    renderChecks('maria');
+    renderWater('fran');
+    renderWater('maria');
   }
 
   function resetCounter() {
-    saveCount(TOTAL);
+    ['75hard_days','75hard_start',
+     '75hard_water_fran','75hard_water_maria',
+     '75hard_checks_fran','75hard_checks_maria'].forEach(k => ls.del(k));
     renderCounter(TOTAL, false);
+    renderWater('fran');
+    renderWater('maria');
+    renderChecks('fran');
+    renderChecks('maria');
   }
 
-  // Init on load
   renderCounter(getCount(), false);
+
+  // ── WATER ────────────────────────────────────────────────
+  const GLASSES = 8;
+
+  function getWater(p)    { return parseInt(ls.get(`75hard_water_${p}`) || 0); }
+  function saveWater(p,n) { ls.set(`75hard_water_${p}`, n); }
+
+  function buildWater(person) {
+    const wrap = document.getElementById(`waterGlasses-${person}`);
+    wrap.innerHTML = '';
+    for (let i = 0; i < GLASSES; i++) {
+      const g = document.createElement('div');
+      g.className = 'water-glass';
+      g.innerHTML = `<svg viewBox="0 0 28 34" fill="none">
+        <path class="water-glass-body" d="M4 4 L6 30 Q6 32 14 32 Q22 32 22 30 L24 4 Z"/>
+        <path class="water-glass-outline" d="M4 4 L6 30 Q6 32 14 32 Q22 32 22 30 L24 4 Z"/>
+        <line x1="4" y1="4" x2="24" y2="4" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+      </svg>`;
+      g.addEventListener('click', () => {
+        let n = getWater(person);
+        n = i < n ? i : i + 1;
+        saveWater(person, Math.min(n, GLASSES));
+        renderWater(person);
+      });
+      wrap.appendChild(g);
+    }
+  }
+
+  function renderWater(person) {
+    const n = getWater(person);
+    document.querySelectorAll(`#waterGlasses-${person} .water-glass`).forEach((g,i) =>
+      g.classList.toggle('filled', i < n)
+    );
+    const ltr = (n * 0.33).toFixed(1);
+    const lbl = document.getElementById(`waterLabel-${person}`);
+    lbl.textContent = `${n} / ${GLASSES} glasses (~${ltr}L)`;
+    lbl.classList.toggle('full', n >= GLASSES);
+  }
+
+  buildWater('fran');  renderWater('fran');
+  buildWater('maria'); renderWater('maria');
+
+  // ── CHECKLIST ────────────────────────────────────────────
+  function getChecks(p) {
+    try { return JSON.parse(ls.get(`75hard_checks_${p}`)) || {}; } catch { return {}; }
+  }
+  function saveChecks(p, obj) { ls.set(`75hard_checks_${p}`, JSON.stringify(obj)); }
+
+  function clearDayData(p) {
+    const checks = getChecks(p);
+    delete checks[today()];
+    saveChecks(p, checks);
+    saveWater(p, 0);
+  }
+
+  function renderChecks(person) {
+    const checks     = getChecks(person);
+    const dayChecks  = checks[today()] || {};
+    document.querySelectorAll(`#checks-${person} .daily-check-item`).forEach(item => {
+      item.classList.toggle('checked', !!dayChecks[item.dataset.key]);
+    });
+  }
+
+  function toggleCheck(item, person) {
+    const checks = getChecks(person);
+    const d = today();
+    if (!checks[d]) checks[d] = {};
+    checks[d][item.dataset.key] = !checks[d][item.dataset.key];
+    saveChecks(person, checks);
+    renderChecks(person);
+  }
+
+  renderChecks('fran');
+  renderChecks('maria');
 
   // DAY TABS
   function showDay(day, btn) {
