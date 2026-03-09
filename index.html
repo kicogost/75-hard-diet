@@ -2502,13 +2502,29 @@
   const TOTAL = 75;
   const CIRC = 2 * Math.PI * 56; // r=56 → 351.86
 
+  // ── STORAGE (with in-memory fallback if localStorage is blocked) ──
+  const _mem = {};
   const ls = {
-    get: k => localStorage.getItem(k),
-    set: (k,v) => localStorage.setItem(k, v),
-    del: k => localStorage.removeItem(k)
+    get(k) {
+      try { return localStorage.getItem(k); }
+      catch { return _mem[k] ?? null; }
+    },
+    set(k, v) {
+      try { localStorage.setItem(k, String(v)); }
+      catch {}
+      _mem[k] = String(v);
+    },
+    del(k) {
+      try { localStorage.removeItem(k); }
+      catch {}
+      delete _mem[k];
+    }
   };
 
-  function getCount()     { return parseInt(ls.get('75hard_days') ?? TOTAL); }
+  function getCount() {
+    const v = parseInt(ls.get('75hard_days'));
+    return (isNaN(v) || v < 0 || v > TOTAL) ? TOTAL : v;
+  }
   function saveCount(n)   { ls.set('75hard_days', n); }
   function getStart()     { return ls.get('75hard_start'); }
   function saveStart(d)   { ls.set('75hard_start', d); }
