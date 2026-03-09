@@ -651,8 +651,11 @@
   /* Reset — subtle icon in top-right of card */
   .counter-reset-row {
     position: absolute;
-    top: 16px;
-    right: 20px;
+    top: 14px;
+    right: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
 
   .counter-reset {
@@ -1570,6 +1573,7 @@
     <div class="counter-card" style="position:relative;">
 
       <div class="counter-reset-row">
+        <span id="syncStatus" style="font-family:'Syne',sans-serif;font-size:9px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);display:flex;align-items:center;"></span>
         <button class="counter-reset" id="counterReset" onclick="resetCounter()" title="Reset challenge">↺</button>
       </div>
 
@@ -2497,38 +2501,123 @@
   <div class="footer-sub">Francisco & Maria · Madrid 2025 · Made with 🔥</div>
 </footer>
 
-<script>
-  // ── COUNTER ──────────────────────────────────────────────
-  const TOTAL = 75;
-  const CIRC = 2 * Math.PI * 56; // r=56 → 351.86
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  // ── STORAGE (with in-memory fallback if localStorage is blocked) ──
-  const _mem = {};
-  const ls = {
-    get(k) {
-      try { return localStorage.getItem(k); }
-      catch { return _mem[k] ?? null; }
-    },
-    set(k, v) {
-      try { localStorage.setItem(k, String(v)); }
-      catch {}
-      _mem[k] = String(v);
-    },
-    del(k) {
-      try { localStorage.removeItem(k); }
-      catch {}
-      delete _mem[k];
-    }
+<script> — paste your values here after setup
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  const SUPABASE_URL = 'https://dyzvblmwdmzrycwnktao.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR5enZibG13ZG16cnljd25rdGFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwNTI3ODYsImV4cCI6MjA4ODYyODc4Nn0.1QuB5x50DKcYrBNNOJRIQg-Mn9EbDhP9Zq9BnGf2wjg';
+
+  // ── CONSTANTS ─────────────────────────────────────────────
+  const TOTAL   = 75;
+  const CIRC    = 2 * Math.PI * 56;
+  const GLASSES = 8;
+
+  // ── IN-MEMORY STATE ───────────────────────────────────────
+  const state = {
+    days: TOTAL, start: null,
+    water_fran: 0, water_maria: 0,
+    checks_fran: {}, checks_maria: {}
   };
 
-  function getCount() {
-    const v = parseInt(ls.get('75hard_days'));
-    return (isNaN(v) || v < 0 || v > TOTAL) ? TOTAL : v;
-  }
-  function saveCount(n)   { ls.set('75hard_days', n); }
-  function getStart()     { return ls.get('75hard_start'); }
-  function saveStart(d)   { ls.set('75hard_start', d); }
+  // ── LOCAL STORAGE ─────────────────────────────────────────
+  const _mem = {};
+  const ls = {
+    get(k)   { try { return localStorage.getItem(k); } catch { return _mem[k] ?? null; } },
+    set(k,v) { try { localStorage.setItem(k, String(v)); } catch {} _mem[k] = String(v); },
+    del(k)   { try { localStorage.removeItem(k); } catch {} delete _mem[k]; }
+  };
 
+  function lsSeed() {
+    const d = parseInt(ls.get('75hard_days'));
+    state.days  = (isNaN(d) || d < 0 || d > TOTAL) ? TOTAL : d;
+    state.start = ls.get('75hard_start') || null;
+    ['fran','maria'].forEach(p => {
+      state[`water_${p}`] = parseInt(ls.get(`75hard_water_${p}`)) || 0;
+      try { state[`checks_${p}`] = JSON.parse(ls.get(`75hard_checks_${p}`)) || {}; }
+      catch { state[`checks_${p}`] = {}; }
+    });
+  }
+
+  // ── PERSIST (localStorage + Supabase) ────────────────────
+  function persist(key, value) {
+    const raw = typeof value === 'object' ? JSON.stringify(value) : String(value);
+    ls.set(`75hard_${key}`, raw);
+    dbWrite(key, value);
+  }
+
+  // ── SUPABASE ──────────────────────────────────────────────
+  let sb = null;
+
+  async function dbWrite(key, value) {
+    if (!sb) return;
+    await sb.from('challenge').upsert({ key, value: JSON.stringify(value) }, { onConflict: 'key' });
+  }
+
+  async function dbLoad() {
+    if (!sb) return;
+    const { data } = await sb.from('challenge').select('key,value');
+    if (!data) return;
+    data.forEach(row => {
+      try {
+        const v = JSON.parse(row.value);
+        if (row.key === 'days')         state.days         = v;
+        if (row.key === 'start')        state.start        = v;
+        if (row.key === 'water_fran')   state.water_fran   = v;
+        if (row.key === 'water_maria')  state.water_maria  = v;
+        if (row.key === 'checks_fran')  state.checks_fran  = v;
+        if (row.key === 'checks_maria') state.checks_maria = v;
+      } catch {}
+    });
+  }
+
+  function dbSubscribe() {
+    if (!sb) return;
+    sb.channel('challenge-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'challenge' }, ({ new: row }) => {
+        try {
+          const v = JSON.parse(row.value);
+          if (row.key === 'days')         { state.days         = v; renderCounter(v, true); }
+          if (row.key === 'start')        { state.start        = v; renderCounterDates(); }
+          if (row.key === 'water_fran')   { state.water_fran   = v; renderWater('fran'); }
+          if (row.key === 'water_maria')  { state.water_maria  = v; renderWater('maria'); }
+          if (row.key === 'checks_fran')  { state.checks_fran  = v; renderChecks('fran'); }
+          if (row.key === 'checks_maria') { state.checks_maria = v; renderChecks('maria'); }
+        } catch {}
+      })
+      .subscribe(s => setSyncStatus(s === 'SUBSCRIBED' ? 'synced' : 'connecting'));
+  }
+
+  async function initSupabase() {
+    if (!SUPABASE_URL || !SUPABASE_KEY) { setSyncStatus('offline'); return; }
+    try {
+      sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      setSyncStatus('connecting');
+      await dbLoad();
+      renderCounter(state.days, false);
+      renderWater('fran');  renderWater('maria');
+      renderChecks('fran'); renderChecks('maria');
+      dbSubscribe();
+    } catch(e) {
+      console.warn('Supabase error:', e);
+      setSyncStatus('offline');
+    }
+  }
+
+  function setSyncStatus(status) {
+    const el = document.getElementById('syncStatus');
+    if (!el) return;
+    const map = {
+      synced:     { dot: '#7a8c4e', text: 'Synced' },
+      connecting: { dot: '#c9a84c', text: 'Connecting...' },
+      offline:    { dot: '#5a4e42', text: 'Offline' }
+    };
+    const s = map[status] || map.offline;
+    el.innerHTML = `<span style="width:6px;height:6px;border-radius:50%;background:${s.dot};display:inline-block;margin-right:5px;flex-shrink:0;"></span>${s.text}`;
+  }
+
+  // ── HELPERS ───────────────────────────────────────────────
   function fmtDate(s) {
     return new Date(s).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
   }
@@ -2538,10 +2627,10 @@
   }
   function today() { return new Date().toISOString().split('T')[0]; }
 
+  // ── COUNTER ───────────────────────────────────────────────
   function renderCounter(n, animate) {
     const completed = TOTAL - n;
     const progress  = completed / TOTAL;
-
     document.getElementById('counterArc').style.strokeDashoffset = CIRC * (1 - progress);
     document.getElementById('counterNum').textContent = n;
     document.getElementById('progressFill').style.width = Math.round(progress * 100) + '%';
@@ -2559,80 +2648,67 @@
     const reset  = document.getElementById('counterReset');
 
     if (n === TOTAL) {
-      btn.classList.remove('done');
-      hint.textContent   = 'Tap to log day 1';
+      btn.classList.remove('done'); hint.textContent = 'Tap to log day 1';
       status.textContent = 'Ready to start your challenge?';
     } else if (n === 0) {
-      btn.classList.add('done');
-      hint.textContent   = 'Challenge complete!';
+      btn.classList.add('done'); hint.textContent = 'Challenge complete!';
       status.textContent = '🏆 75 Hard Complete. Legends.';
     } else if (n <= 5) {
-      btn.classList.remove('done');
-      hint.textContent   = 'So close — tap to log';
+      btn.classList.remove('done'); hint.textContent = 'So close — tap to log';
       status.textContent = `${n} day${n===1?'':'s'} left. Don't stop now.`;
     } else if (n <= 25) {
-      btn.classList.remove('done');
-      hint.textContent   = 'Tap to log a day';
+      btn.classList.remove('done'); hint.textContent = 'Tap to log a day';
       status.textContent = `${completed} days down. Almost there.`;
     } else {
-      btn.classList.remove('done');
-      hint.textContent   = 'Tap to log a day';
+      btn.classList.remove('done'); hint.textContent = 'Tap to log a day';
       status.textContent = `${completed} day${completed===1?'':'s'} done. Keep going.`;
     }
 
-    const start = getStart();
-    const startEl = document.getElementById('startDateEl');
-    const endEl   = document.getElementById('endDateEl');
-    if (start) {
-      startEl.textContent = fmtDate(start);
-      startEl.classList.remove('not-started');
-      endEl.textContent   = fmtDate(addDays(start, 75));
-      endEl.classList.remove('not-started');
-    } else {
-      startEl.textContent = 'Not started';
-      startEl.classList.add('not-started');
-      endEl.textContent   = '—';
-      endEl.classList.add('not-started');
-    }
-
+    renderCounterDates();
     reset.classList.toggle('visible', n < TOTAL);
   }
 
+  function renderCounterDates() {
+    const startEl = document.getElementById('startDateEl');
+    const endEl   = document.getElementById('endDateEl');
+    if (state.start) {
+      startEl.textContent = fmtDate(state.start); startEl.classList.remove('not-started');
+      endEl.textContent   = fmtDate(addDays(state.start, 75)); endEl.classList.remove('not-started');
+    } else {
+      startEl.textContent = 'Not started'; startEl.classList.add('not-started');
+      endEl.textContent   = '—';           endEl.classList.add('not-started');
+    }
+  }
+
   function tickCounter() {
-    let n = getCount();
+    let n = state.days;
     if (n <= 0) return;
-    if (n === TOTAL && !getStart()) saveStart(today());
+    if (n === TOTAL && !state.start) {
+      state.start = today();
+      persist('start', state.start);
+    }
     n--;
-    saveCount(n);
-    // Reset both checklists and water for the new day
+    state.days = n;
+    persist('days', n);
     clearDayData('fran');
     clearDayData('maria');
     renderCounter(n, true);
-    renderChecks('fran');
-    renderChecks('maria');
-    renderWater('fran');
-    renderWater('maria');
+    renderChecks('fran'); renderChecks('maria');
+    renderWater('fran');  renderWater('maria');
   }
 
   function resetCounter() {
-    ['75hard_days','75hard_start',
-     '75hard_water_fran','75hard_water_maria',
-     '75hard_checks_fran','75hard_checks_maria'].forEach(k => ls.del(k));
+    state.days = TOTAL; state.start = null;
+    state.water_fran = 0; state.water_maria = 0;
+    state.checks_fran = {}; state.checks_maria = {};
+    ['days','start','water_fran','water_maria','checks_fran','checks_maria']
+      .forEach(k => { ls.del(`75hard_${k}`); dbWrite(k, k === 'days' ? TOTAL : null); });
     renderCounter(TOTAL, false);
-    renderWater('fran');
-    renderWater('maria');
-    renderChecks('fran');
-    renderChecks('maria');
+    renderWater('fran'); renderWater('maria');
+    renderChecks('fran'); renderChecks('maria');
   }
 
-  renderCounter(getCount(), false);
-
-  // ── WATER ────────────────────────────────────────────────
-  const GLASSES = 8;
-
-  function getWater(p)    { return parseInt(ls.get(`75hard_water_${p}`) || 0); }
-  function saveWater(p,n) { ls.set(`75hard_water_${p}`, n); }
-
+  // ── WATER ─────────────────────────────────────────────────
   function buildWater(person) {
     const wrap = document.getElementById(`waterGlasses-${person}`);
     wrap.innerHTML = '';
@@ -2645,9 +2721,11 @@
         <line x1="4" y1="4" x2="24" y2="4" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
       </svg>`;
       g.addEventListener('click', () => {
-        let n = getWater(person);
+        let n = state[`water_${person}`];
         n = i < n ? i : i + 1;
-        saveWater(person, Math.min(n, GLASSES));
+        n = Math.min(n, GLASSES);
+        state[`water_${person}`] = n;
+        persist(`water_${person}`, n);
         renderWater(person);
       });
       wrap.appendChild(g);
@@ -2655,51 +2733,47 @@
   }
 
   function renderWater(person) {
-    const n = getWater(person);
-    document.querySelectorAll(`#waterGlasses-${person} .water-glass`).forEach((g,i) =>
-      g.classList.toggle('filled', i < n)
-    );
-    const ltr = (n * 0.33).toFixed(1);
+    const n = state[`water_${person}`];
+    document.querySelectorAll(`#waterGlasses-${person} .water-glass`)
+      .forEach((g,i) => g.classList.toggle('filled', i < n));
     const lbl = document.getElementById(`waterLabel-${person}`);
-    lbl.textContent = `${n} / ${GLASSES} glasses (~${ltr}L)`;
+    lbl.textContent = `${n} / ${GLASSES} glasses (~${(n*0.33).toFixed(1)}L)`;
     lbl.classList.toggle('full', n >= GLASSES);
   }
 
-  buildWater('fran');  renderWater('fran');
-  buildWater('maria'); renderWater('maria');
-
-  // ── CHECKLIST ────────────────────────────────────────────
-  function getChecks(p) {
-    try { return JSON.parse(ls.get(`75hard_checks_${p}`)) || {}; } catch { return {}; }
-  }
-  function saveChecks(p, obj) { ls.set(`75hard_checks_${p}`, JSON.stringify(obj)); }
-
+  // ── CHECKLIST ─────────────────────────────────────────────
   function clearDayData(p) {
-    const checks = getChecks(p);
+    const checks = state[`checks_${p}`] || {};
     delete checks[today()];
-    saveChecks(p, checks);
-    saveWater(p, 0);
+    state[`water_${p}`] = 0;
+    persist(`water_${p}`, 0);
+    persist(`checks_${p}`, checks);
   }
 
   function renderChecks(person) {
-    const checks     = getChecks(person);
-    const dayChecks  = checks[today()] || {};
+    const dayChecks = (state[`checks_${person}`] || {})[today()] || {};
     document.querySelectorAll(`#checks-${person} .daily-check-item`).forEach(item => {
       item.classList.toggle('checked', !!dayChecks[item.dataset.key]);
     });
   }
 
   function toggleCheck(item, person) {
-    const checks = getChecks(person);
+    const checks = state[`checks_${person}`] || {};
     const d = today();
     if (!checks[d]) checks[d] = {};
     checks[d][item.dataset.key] = !checks[d][item.dataset.key];
-    saveChecks(person, checks);
+    state[`checks_${person}`] = checks;
+    persist(`checks_${person}`, checks);
     renderChecks(person);
   }
 
-  renderChecks('fran');
-  renderChecks('maria');
+  // ── BOOT ──────────────────────────────────────────────────
+  lsSeed();
+  renderCounter(state.days, false);
+  buildWater('fran');  renderWater('fran');
+  buildWater('maria'); renderWater('maria');
+  renderChecks('fran'); renderChecks('maria');
+  initSupabase();
 
   // DAY TABS
   function showDay(day, btn) {
